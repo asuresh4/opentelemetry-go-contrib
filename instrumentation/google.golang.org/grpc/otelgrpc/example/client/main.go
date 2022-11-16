@@ -21,23 +21,21 @@ import (
 	"log"
 	"time"
 
-	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc/example/api"
-	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc/example/config"
-
+	"github.com/signalfx/splunk-otel-go/distro"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
-
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc/example/api"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 )
 
 func main() {
-	tp, err := config.Init()
+	sdk, err := distro.Run()
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer func() {
-		if err := tp.Shutdown(context.Background()); err != nil {
+		if err := sdk.Shutdown(context.Background()); err != nil {
 			log.Printf("Error shutting down tracer provider: %v", err)
 		}
 	}()

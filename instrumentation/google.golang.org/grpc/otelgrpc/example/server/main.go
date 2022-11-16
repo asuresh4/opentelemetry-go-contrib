@@ -17,6 +17,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/signalfx/splunk-otel-go/distro"
 	"io"
 	"log"
 	"net"
@@ -26,10 +27,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc/example/api"
-	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc/example/config"
-
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc/example/api"
 
 	"google.golang.org/grpc"
 )
@@ -51,6 +50,8 @@ func (s *server) SayHello(ctx context.Context, in *api.HelloRequest) (*api.Hello
 	s.workHard(ctx)
 	time.Sleep(50 * time.Millisecond)
 
+	span := trace.SpanFromContext(ctx)
+	span.SetAttributes(attribute.String("foo", "bar"))
 	return &api.HelloResponse{Reply: "Hello " + in.Greeting}, nil
 }
 
@@ -124,12 +125,12 @@ func (s *server) SayHelloBidiStream(stream api.HelloService_SayHelloBidiStreamSe
 }
 
 func main() {
-	tp, err := config.Init()
+	sdk, err := distro.Run()
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer func() {
-		if err := tp.Shutdown(context.Background()); err != nil {
+		if err := sdk.Shutdown(context.Background()); err != nil {
 			log.Printf("Error shutting down tracer provider: %v", err)
 		}
 	}()
